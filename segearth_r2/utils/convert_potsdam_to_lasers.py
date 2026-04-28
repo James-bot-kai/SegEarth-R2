@@ -16,6 +16,13 @@ Usage:
         --out_img_dir /data/potsdam_rgb/test/images \
         --out_ann     /data/potsdam_rgb/test/annotations/test_data.json \
         --rgb_indices 0 1 2
+    # 转换测试集（含 GT mask，用于后续评估指标计算）
+    python segearth_r2/utils/convert_potsdam_to_lasers.py \
+    --lisa_json /root/SegImage_Output/step2_dataset_qwen_single_turn.json \
+    --base_dir /root/SegImage_Output \
+    --out_img_dir /root/SegImage_Output/images_rgb_vis \
+    --out_ann /root/SegImage_Output/test_data.json \
+    --rgb_indices 0 1 2
 """
 
 import os
@@ -85,7 +92,8 @@ def convert(lisa_json, base_dir, out_img_dir, out_ann, rgb_indices, include_mask
             binary = (mask_np == cls_idx).astype(np.uint8)
             # One RLE per [SEG] token in the answer
             n_seg = item['conversations'][1]['value'].count('[SEG]')
-            rle_list = [binary_mask_to_rle(binary)] * n_seg  # same mask repeated
+            rle_single = binary_mask_to_rle(binary)
+            rle_list = [rle_single] * max(n_seg, 1)  # 每个 [SEG] 对应一个 mask
 
         # -- Build LaSeRS entry ----------------------------------------------
         description = (item['conversations'][0]['value']
@@ -93,7 +101,7 @@ def convert(lisa_json, base_dir, out_img_dir, out_ann, rgb_indices, include_mask
         answer = item['conversations'][1]['value']
 
         entry = {
-            'id':          item.get('id', uid),
+            'id':          uid,           # 必须是数字，原始字符串 id 含 / 会导致文件名非法
             'image_name':  img_name,
             'description': description,
             'answer':      answer,

@@ -150,6 +150,7 @@ class PotsdamDatasetForSegEarthR2(RS_Base_Dataset):
         )  # [1024, 1024]
 
         # ── 5. Build conversation ──────────────────────────────────────
+        #
         human_text = item['conversations'][0]['value']
         gpt_text   = item['conversations'][1]['value']
         # Strip image placeholder from description (goes into token_refer_id)

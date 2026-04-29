@@ -65,8 +65,10 @@ def ms_deform_attn_core_pytorch(value, value_spatial_shapes, sampling_locations,
         # N_, Lq_, M_, P_, 2 -> N_*M_, Lq_, P_, 2
         sampling_grid_l_ = sampling_grids[:, :, :, lid_].transpose(1, 2).flatten(0, 1)
         data_type = value_l_.dtype
+        # F.grid_sample on CUDA does not support BFloat16 (PyTorch ≤ 2.1).
+        # Cast to float32 for the interpolation, then restore original dtype.
         sampling_value_l_ = F.grid_sample(
-            value_l_, sampling_grid_l_,
+            value_l_.float(), sampling_grid_l_.float(),
             mode='bilinear', padding_mode='zeros', align_corners=False)
         sampling_value_list.append(sampling_value_l_.to(data_type))
 
